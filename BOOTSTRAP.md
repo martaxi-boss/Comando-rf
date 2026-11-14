@@ -62,6 +62,17 @@ Montagem física **ainda não testada**. Fazer primeiro ensaio de ecrã e navega
 - **Não** escolher `Bruce-esp32-c5.bin` (sem TFT) nem variante ST7789 para este ecrã.
 - Não há ainda prova de compilação independente, gravação real em placa, testes de toque/RF ou instalação OTA do fork. Não anunciar instalação concluída antes desses testes.
 
+## 5.1. Referências de compra (preços apenas indicativos)
+
+Verificar disponibilidade e modelo concreto na data da encomenda; os preços e vendedores podem mudar.
+
+- **ESP32-C5 DevKitC-1-N8R8**: [Mouser Portugal](https://pt.mouser.com/pt/ProductDetail/Espressif-Systems/ESP32-C5-DevKitC-1-N8R8), referência do fabricante; opção também em [DigiKey Portugal](https://www.digikey.pt/pt/products/detail/espressif-systems/ESP32-C5-DEVKITC-1-N8R8/28718162).
+- **TFT SPI ILI9341 2,8 pol.**: há ofertas de diferentes vendedores na [Worten Portugal](https://www.worten.pt/produtos/modulo-de-exibicao-lcd-tft-spi-ili9341-de-2-8-polegadas-240x320-com-tela-sensivel-ao-toque-mrkean-9059710529876), mas confirmar por escrito que **usa XPT2046**, tem pinos SPI de toque expostos e interface lógica 3,3 V antes de encomendar.
+- **CC1101 + antena 433 MHz**: [exemplo Worten Portugal](https://www.worten.pt/produtos/modulo-sem-fio-cc1101-com-antena-sma-modulo-transceptor-sem-fio-para-433-mhz-com-alcance-aprimorado-mrkean-7396670043113). Confirmar banda, conector e alimentação 3,3 V.
+- Jumpers, breadboard, USB de dados e microSD em lojas de eletrónica; selecionar conectores de acordo com os módulos recebidos.
+
+A lista é de **componentes compatíveis pretendidos**, não uma confirmação de compatibilidade de cada anúncio comercial específico nem de stock.
+
 ## 6. O que Bruce 1.17 já contém e o que falta provar
 
 | Área | Estado |
