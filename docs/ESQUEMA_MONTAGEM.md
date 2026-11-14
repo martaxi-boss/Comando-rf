@@ -1,6 +1,6 @@
 # Esquema de montagem — ESP32-C5 + ILI9341/XPT2046 + CC1101
 
-> Fonte técnica de pinos: [Bruce `boards/ESP32-C5-tft/connections.md`](../boards/ESP32-C5-tft/connections.md), [`pins_arduino.h` do upstream](https://github.com/BruceDevices/firmware/blob/1.17/boards/ESP32-C5-tft/pins_arduino.h).
+> Fonte técnica de pinos: [Bruce `boards/ESP32-C5-tft/connections.md`](../boards/ESP32-C5-tft/connections.md), [`ESP32-C5-tft.ini` do upstream](https://github.com/BruceDevices/firmware/blob/1.17/boards/ESP32-C5-tft/ESP32-C5-tft.ini).
 > **Esquema lógico, não layout físico de uma placa específica.** Confirmar a serigrafia e pinout da ESP32-C5 DevKitC-1 recebida antes de ligar cabos.
 
 ## Diagrama funcional
