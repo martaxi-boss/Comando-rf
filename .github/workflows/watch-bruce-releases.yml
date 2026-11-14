@@ -1,0 +1,87 @@
+name: Watch Bruce upstream firmware releases
+
+on:
+  schedule:
+    - cron: "17 8 * * *"
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/watch-bruce-releases.yml"
+      - "COMANDO_RF_UPSTREAM.md"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: watch-bruce-releases
+  cancel-in-progress: false
+
+jobs:
+  check-release:
+    if: github.repository == 'martaxi-boss/Comando-rf'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout local version metadata
+        uses: actions/checkout@v4
+
+      - name: Compare official stable Bruce release and notify via Issue
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          BASELINE="$(sed -nE 's#^- Versão: https://github.com/BruceDevices/firmware/releases/tag/([^[:space:]]+).*$#\1#p' COMANDO_RF_UPSTREAM.md | head -n 1)"
+          if [[ -z "$BASELINE" ]]; then
+            echo "::error::Cannot read pinned upstream version from COMANDO_RF_UPSTREAM.md"
+            exit 1
+          fi
+          RELEASE_JSON="$(gh api repos/BruceDevices/firmware/releases/latest)"
+          LATEST="$(jq -r '.tag_name // empty' <<< "$RELEASE_JSON")"
+          if [[ -z "$LATEST" || "$LATEST" == "null" ]]; then
+            echo "::error::No upstream stable release tag returned"
+            exit 1
+          fi
+          echo "Imported Bruce version: $BASELINE"
+          echo "Latest stable Bruce release: $LATEST"
+          if [[ "$BASELINE" == "$LATEST" ]]; then
+            echo "Already synchronized to the latest stable Bruce release."
+            exit 0
+          fi
+
+          TITLE="[Bruce upstream] Nova release $LATEST disponível"
+          if gh issue list --repo "$GITHUB_REPOSITORY" --state all --limit 1000 --json title \
+            | jq -e --arg title "$TITLE" 'any(.[]; .title == $title)' >/dev/null; then
+            echo "Existing open or closed Issue already tracks $LATEST."
+            exit 0
+          fi
+
+          RELEASE_URL="$(jq -r '.html_url // empty' <<< "$RELEASE_JSON")"
+          C5_ASSET_URL="$(jq -r '[.assets[]? | select(.name == "Bruce-esp32-c5-tft.bin") | .browser_download_url][0] // empty' <<< "$RELEASE_JSON")"
+          C5_SHA="$(jq -r '[.assets[]? | select(.name == "Bruce-esp32-c5-tft.bin") | .digest][0] // empty' <<< "$RELEASE_JSON")"
+          BODY_FILE="$RUNNER_TEMP/bruce-update.md"
+          {
+            printf '## Bruce upstream: versão nova para analisar\n\n'
+            printf -- '- Versão presente no Comando RF: `%s`\n' "$BASELINE"
+            printf -- '- Última release estável do autor: `%s`\n' "$LATEST"
+            printf -- '- Publicação oficial: %s\n' "$RELEASE_URL"
+            if [[ -n "$C5_ASSET_URL" ]]; then
+              printf -- '- Binário oficial ESP32-C5 com TFT: %s\n' "$C5_ASSET_URL"
+              if [[ -n "$C5_SHA" ]]; then
+                printf -- '- Digest declarado pelo autor: `%s`\n' "$C5_SHA"
+              fi
+            else
+              printf -- '- ATENÇÃO: esta release não inclui `Bruce-esp32-c5-tft.bin` com o nome esperado.\n'
+            fi
+            printf '\n### Antes de incorporar\n\n'
+            printf '%s\n' '- [ ] Verificar changelog, licença AGPL e alterações RF/CC1101/ILI9341/XPT2046'
+            printf '%s\n' '- [ ] Comparar diferenças com a base atualmente importada'
+            printf '%s\n' '- [ ] Rever segurança e preservar modificações próprias, sem ativar CI desconhecido'
+            printf '%s\n' '- [ ] Compilar/testar firmware para o hardware específico e validar SHA-256'
+            printf '%s\n' '- [ ] Confirmar protocolo autorizado e persistência de Rolling Code antes de qualquer transmissão'
+            printf '%s\n' '- [ ] Atualizar COMANDO_RF_UPSTREAM.md e BOOTSTRAP.md somente após aprovação'
+            printf '\n%s\n' '**Este aviso NÃO atualizou firmware, não gravou a placa e não alterou o código-fonte.**'
+          } > "$BODY_FILE"
+          gh issue create --repo "$GITHUB_REPOSITORY" --assignee martaxi-boss \
+            --title "$TITLE" --body-file "$BODY_FILE"
