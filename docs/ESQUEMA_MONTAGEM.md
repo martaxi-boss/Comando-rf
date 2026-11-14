@@ -44,6 +44,16 @@ flowchart LR
 
 **T_IRQ:** não usado pelo pinout Bruce apresentado (`TOUCH_INT=-1`), deixar desligado nesta montagem. **CC1101 GDO2:** não exigido para este pinout. **GPIO0 e GPIO28:** não ligar botões de 3 vias na configuração tátil, salvo projeto explícito e firmware revisto.
 
+## Onde encontrar os GPIO no DevKitC-1 oficial
+
+Segundo a documentação **Espressif DevKitC-1 v1.2**:
+
+- Conector **J1**: 3V3=pino 1; RST=pino 2; GPIO2=pino 3; GPIO1=pino 6; GPIO6=pino 7; GPIO7=pino 8; GPIO8=pino 9; GPIO9=pino 10; GPIO10=pino 11; GPIO25=pino 13; GND=pino 15.
+- Conector **J3**: GND=pino 1; GPIO24=pino 4; GPIO23=pino 5; GPIO28=pino 11.
+- Referência do fabricante: https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32c5/esp32-c5-devkitc-1/user_guide.html
+
+**Importante:** a disposição de GPIO8/9/10 nos headers difere entre revisões v1.1 e v1.2 do DevKitC-1. Identificar a revisão impressa na placa e confirmar a serigrafia antes de usar esta correspondência física. GPIO7 e GPIO25 também têm funções de arranque (*strapping*); evitar cargas que forcem níveis inesperados durante o reset.
+
 ## Ordem segura de ligação e teste
 
 1. Desligar USB e qualquer fonte de alimentação.
