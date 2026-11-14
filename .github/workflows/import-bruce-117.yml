@@ -1,0 +1,71 @@
+name: Import Bruce 1.17 source snapshot
+on:
+  push:
+    paths:
+      - ".github/workflows/import-bruce-117.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    if: github.repository == 'martaxi-boss/Comando-rf'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout empty destination
+        uses: actions/checkout@v4
+
+      - name: Import pinned, unmodified upstream sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED="2b6ba4d490bfcf94ce2574c6154537dbd5838c3d"
+          SRC="$RUNNER_TEMP/bruce-upstream"
+          git clone --quiet --depth 1 --single-branch --branch 1.17 https://github.com/BruceDevices/firmware.git "$SRC"
+          ACTUAL="$(git -C "$SRC" rev-parse HEAD)"
+          if [[ "$ACTUAL" != "$EXPECTED" ]]; then
+            echo "::error::Upstream tag changed: $ACTUAL != $EXPECTED"
+            exit 1
+          fi
+          if [[ -e COMANDO_RF_UPSTREAM.md || -e platformio.ini ]]; then
+            echo "::error::Destination already contains imported project files; refusing to overwrite."
+            exit 1
+          fi
+          # Preserve the upstream source tree. GitHub Actions files are stored
+          # separately to avoid executing unfamiliar upstream CI workflows.
+          rsync -a --exclude='.git' --exclude='.github/workflows/' "$SRC/" ./
+          if [[ -d "$SRC/.github/workflows" ]]; then
+            mkdir -p upstream-ci-original
+            rsync -a "$SRC/.github/workflows/" upstream-ci-original/
+          fi
+          cat > COMANDO_RF_UPSTREAM.md <<'PROVENANCE'
+          # Comando RF — copiado de Bruce Firmware
+
+          Este repositório contém uma cópia do código-fonte do projeto Bruce Firmware,
+          da versão estável **1.17**, publicado em 12 de novembro de 2026.
+
+          - Fonte: https://github.com/BruceDevices/firmware
+          - Versão: https://github.com/BruceDevices/firmware/releases/tag/1.17
+          - Commit original: `2b6ba4d490bfcf94ce2574c6154537dbd5838c3d`
+          - Licença original: AGPL-3.0-or-later (ficheiro LICENSE e avisos originais)
+          - Estado: cópia do código, não certificação física de hardware
+          - Alterações à aplicação: nenhuma nesta importação
+
+          Por segurança, os ficheiros de GitHub Actions do projeto original foram
+          conservados em `upstream-ci-original/` em vez de serem ativados
+          automaticamente no teu repositório. O restante código-fonte foi
+          copiado do tag fixo acima.
+
+          Os protocolos de Rolling Code continuam sujeitos a emparelhamento e
+          credenciais válidas dos equipamentos autorizados.
+          PROVENANCE
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No source changes to import"
+            exit 0
+          fi
+          git commit -m "Import Bruce Firmware 1.17 (pinned upstream snapshot)"
+          git push origin HEAD:main
